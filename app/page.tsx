@@ -1,70 +1,39 @@
+"use client"
+
 import * as React from "react"
-import { OpenInV0Button } from "@/components/open-in-v0-button"
-import { HelloWorld } from "@/registry/new-york/blocks/hello-world/hello-world"
-import { ExampleForm } from "@/registry/new-york/blocks/example-form/example-form"
-import PokemonPage from "@/registry/new-york/blocks/complex-component/page"
-import { ExampleCard } from "@/registry/new-york/blocks/example-with-css/example-card"
-// This page displays items from the custom registry.
-// You are free to implement this with your own design as needed.
+
+import * as Scrubline from "@/registry/default/ui/scrubline"
+import type { Segment } from "@/registry/default/lib/scrubline-scale"
+
+const COUNT = 10_000
+
+const SEGMENTS: Segment[] = [
+  { id: "intro", start: 0, end: 1200, label: "Intro" },
+  { id: "verse-a", start: 1200, end: 3400, label: "Zwrotka A" },
+  { id: "chorus-a", start: 3400, end: 4600, label: "Refren" },
+  { id: "bridge", start: 4600, end: 6100, label: "Most" },
+  { id: "verse-b", start: 6100, end: 8000, label: "Zwrotka B" },
+  { id: "outro", start: 8000, end: 10000, label: "Outro" },
+]
 
 export default function Home() {
+  const [value, setValue] = React.useState(0)
+
   return (
-    <div className="max-w-3xl mx-auto flex flex-col min-h-svh px-4 py-8 gap-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">Custom Registry</h1>
-        <p className="text-muted-foreground">
-          A custom registry for distributing code using shadcn.
-        </p>
-      </header>
-      <main className="flex flex-col flex-1 gap-8">
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A simple hello world component
-            </h2>
-            <OpenInV0Button name="hello-world" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <HelloWorld />
-          </div>
-        </div>
+    <main className="mx-auto flex min-h-svh max-w-3xl flex-col gap-6 px-4 py-8">
+      <h1 className="text-3xl font-bold tracking-tight">Scrubline</h1>
 
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A contact form with Zod validation.
-            </h2>
-            <OpenInV0Button name="example-form" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[500px] relative">
-            <ExampleForm />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A complex component showing hooks, libs and components.
-            </h2>
-            <OpenInV0Button name="complex-component" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <PokemonPage />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 border rounded-lg p-4 min-h-[450px] relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm text-muted-foreground sm:pl-3">
-              A login form with a CSS file.
-            </h2>
-            <OpenInV0Button name="example-with-css" className="w-fit" />
-          </div>
-          <div className="flex items-center justify-center min-h-[400px] relative">
-            <ExampleCard />
-          </div>
-        </div>
-      </main>
-    </div>
+      <Scrubline.Root
+        count={COUNT}
+        value={value}
+        onValueChange={setValue}
+        snapTo={SEGMENTS.flatMap((s) => [s.start, s.end])}
+      >
+        <Scrubline.Viewport>
+          <Scrubline.Segments items={SEGMENTS} />
+          <Scrubline.Playhead />
+        </Scrubline.Viewport>
+      </Scrubline.Root>
+    </main>
   )
 }
