@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "registry:build": "shadcn build"
+    "registry:build": "shadcn build",
+    "typecheck:registry": "tsc -p tsconfig.registry.json"
   },
   "dependencies": {
     "clsx": "^2.1.1",

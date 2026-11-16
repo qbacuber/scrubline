@@ -236,7 +236,7 @@ export function Segments({
     const [lo, hi] = visibleRange(items, view)
     const labels: { segment: Segment; left: number; width: number }[] = []
     for (let i = lo; i < hi; i++) {
-      const s = items[i]
+      const s = items[i]!
       if (!s.label && !renderLabel) continue
       const x0 = Math.max(0, axisToX(s.start, view, width))
       const x1 = Math.min(width, axisToX(s.end, view, width))
@@ -342,10 +342,10 @@ export function Markers({
     const tips: { key: number; x: number; h: number; text: string }[] = []
     if (width / spanOf(view) >= labelMinPxPerStep) {
       // Przy tym zoomie widocznych jest najwyżej width / labelMinPxPerStep znaczników.
-      const lo = lowerBound(items.length, (i) => items[i].at + 1 > view.start)
-      const hi = lowerBound(items.length, (i) => items[i].at >= view.end)
+      const lo = lowerBound(items.length, (i) => items[i]!.at + 1 > view.start)
+      const hi = lowerBound(items.length, (i) => items[i]!.at >= view.end)
       for (let i = lo; i < hi; i++) {
-        const m = items[i]
+        const m = items[i]!
         if (m.label)
           tips.push({
             key: i,
@@ -421,15 +421,15 @@ export function Items<T extends { at: number; id: string }>({
 
   const visible = React.useMemo(() => {
     if (width <= 0) return []
-    const lo = lowerBound(items.length, (i) => items[i].at + 1 > view.start)
-    const hi = lowerBound(items.length, (i) => items[i].at >= view.end)
+    const lo = lowerBound(items.length, (i) => items[i]!.at + 1 > view.start)
+    const hi = lowerBound(items.length, (i) => items[i]!.at >= view.end)
     const out: { item: T; x: number }[] = []
     let lastX = -Infinity
     for (let i = lo; i < hi; i++) {
-      const x = stepToXPure(items[i].at, view, width)
+      const x = stepToXPure(items[i]!.at, view, width)
       if (x - lastX < minGapPx) continue
       lastX = x
-      out.push({ item: items[i], x })
+      out.push({ item: items[i]!, x })
     }
     return out
   }, [items, view, width, minGapPx])
@@ -969,7 +969,11 @@ export function Minimap({
 
   React.useLayoutEffect(() => {
     if (!el) return
-    const ro = new ResizeObserver(([entry]) => setW(entry.contentRect.width))
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      setW(entry.contentRect.width)
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [el])

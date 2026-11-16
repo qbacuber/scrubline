@@ -212,9 +212,11 @@ export function useScrubline(options: UseScrublineOptions) {
 
   React.useLayoutEffect(() => {
     if (!viewportEl) return
-    const ro = new ResizeObserver(([entry]) =>
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
       setWidth(entry.contentRect.width)
-    )
+    })
     ro.observe(viewportEl)
     return () => ro.disconnect()
   }, [viewportEl])
@@ -272,6 +274,7 @@ export function useScrubline(options: UseScrublineOptions) {
     const left = (el: Element) => el.getBoundingClientRect().left
     const pinchState = (el: Element): Gesture => {
       const [a, b] = [...pointers.current.values()]
+      if (!a || !b) return { kind: "idle" }
       return {
         kind: "pinch",
         dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
@@ -294,7 +297,7 @@ export function useScrubline(options: UseScrublineOptions) {
       const rest = [...pointers.current.values()]
       // Po pinchu zostaje jeden palec: kontynuuj jako pan (bez kliku na końcu).
       gesture.current =
-        rest.length === 1 ? { kind: "pan", lastX: rest[0].x } : { kind: "idle" }
+        rest.length === 1 ? { kind: "pan", lastX: rest[0]!.x } : { kind: "idle" }
     }
 
     return {

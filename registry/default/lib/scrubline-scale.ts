@@ -202,8 +202,8 @@ export function visibleRange(
   items: readonly Segment[],
   view: View
 ): [number, number] {
-  const lo = lowerBound(items.length, (i) => items[i].end > view.start)
-  const hi = lowerBound(items.length, (i) => items[i].start >= view.end)
+  const lo = lowerBound(items.length, (i) => items[i]!.end > view.start)
+  const hi = lowerBound(items.length, (i) => items[i]!.start >= view.end)
   return [lo, Math.max(lo, hi)]
 }
 
@@ -214,7 +214,7 @@ export function snap(
   maxDist: number
 ): number | null {
   if (targets.length === 0) return null
-  const i = lowerBound(targets.length, (k) => targets[k] >= pos)
+  const i = lowerBound(targets.length, (k) => targets[k]! >= pos)
   let best: number | null = null
   for (const k of [i - 1, i]) {
     const t = targets[k]
@@ -232,8 +232,8 @@ export function neighbor(
 ): number | null {
   const i =
     dir === 1
-      ? lowerBound(targets.length, (k) => targets[k] > value)
-      : lowerBound(targets.length, (k) => targets[k] >= value) - 1
+      ? lowerBound(targets.length, (k) => targets[k]! > value)
+      : lowerBound(targets.length, (k) => targets[k]! >= value) - 1
   return targets[i] ?? null
 }
 
@@ -269,7 +269,7 @@ export function segmentPaths(
   }
 
   for (let i = lo; i < hi; i++) {
-    const s = items[i]
+    const s = items[i]!
     const color = s.color ?? ""
     let x0 = clamp(axisToX(s.start, view, width), 0, width)
     let x1 = clamp(axisToX(s.end, view, width), 0, width)
@@ -309,11 +309,11 @@ export function markerPaths(
 ): Map<string, string> {
   const out = new Map<string, string>()
   const lastX = new Map<string, number>()
-  const lo = lowerBound(items.length, (i) => items[i].at + 1 > view.start)
-  const hi = lowerBound(items.length, (i) => items[i].at >= view.end)
+  const lo = lowerBound(items.length, (i) => items[i]!.at + 1 > view.start)
+  const hi = lowerBound(items.length, (i) => items[i]!.at >= view.end)
   for (let i = lo; i < hi; i++) {
-    const variant = items[i].variant ?? "default"
-    const x = Math.round(stepToX(items[i].at, view, width)) + 0.5
+    const variant = items[i]!.variant ?? "default"
+    const x = Math.round(stepToX(items[i]!.at, view, width)) + 0.5
     if (lastX.get(variant) === x) continue
     lastX.set(variant, x)
     out.set(variant, (out.get(variant) ?? "") + `M${x} 0v${heightOf(variant)}`)
@@ -333,7 +333,7 @@ export function segmentAt(
   items: readonly Segment[],
   pos: number
 ): Segment | null {
-  const i = lowerBound(items.length, (k) => items[k].end > pos)
+  const i = lowerBound(items.length, (k) => items[k]!.end > pos)
   const s = items[i]
   return s && s.start <= pos ? s : null
 }
@@ -347,7 +347,7 @@ export function markerAt(
   pos: number,
   tolerance: number
 ): Marker | null {
-  const i = lowerBound(items.length, (k) => items[k].at + 0.5 >= pos)
+  const i = lowerBound(items.length, (k) => items[k]!.at + 0.5 >= pos)
   let best: Marker | null = null
   for (const k of [i - 1, i]) {
     const m = items[k]

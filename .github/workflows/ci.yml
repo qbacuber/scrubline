@@ -25,6 +25,9 @@ jobs:
       - name: Typecheck
         run: pnpm exec tsc --noEmit
 
+      - name: Typecheck registry (strict)
+        run: pnpm typecheck:registry
+
       - name: Lint
         run: pnpm lint
 

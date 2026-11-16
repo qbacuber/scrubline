@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "verbatimModuleSyntax": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "registry/default/ui/**/*.tsx",
+    "registry/default/hooks/**/*.ts",
+    "registry/default/lib/**/*.ts",
+    "registry/default/examples/**/*.tsx",
+    "lib/utils.ts"
+  ],
+  "exclude": ["node_modules", "registry/default/**/*.test.ts"]
+}
