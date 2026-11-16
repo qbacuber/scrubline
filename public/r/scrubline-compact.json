@@ -1,11 +1,10 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "scrubline-compact",
-  "type": "registry:component",
   "title": "Scrubline compact",
   "description": "Compact (size sm) viewport with just a playhead.",
   "registryDependencies": [
-    "qbacuber/scrubline/scrubline"
+    "qbacuber/ui/scrubline"
   ],
   "files": [
     {
@@ -14,5 +13,6 @@
       "type": "registry:component",
       "target": "components/examples/scrubline-compact.tsx"
     }
-  ]
+  ],
+  "type": "registry:component"
 }

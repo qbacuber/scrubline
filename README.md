@@ -8,16 +8,16 @@ A step-based timeline for React: zoom, pan, playhead, ruler, segments, markers a
 ## Installation
 
 ```bash
-npx shadcn@latest add qbacuber/scrubline/scrubline
+npx shadcn@latest add qbacuber/ui/scrubline
 ```
 
 Pin a release with a tag:
 
 ```bash
-npx shadcn@latest add qbacuber/scrubline/scrubline#v0.1.0
+npx shadcn@latest add qbacuber/ui/scrubline#v0.1.0
 ```
 
-Examples can be installed the same way, e.g. `qbacuber/scrubline/scrubline-demo`, `scrubline-minimap`, `scrubline-compact`, `scrubline-time`.
+Examples can be installed the same way, e.g. `qbacuber/ui/scrubline-demo`, `scrubline-minimap`, `scrubline-compact`, `scrubline-time`.
 
 ## Usage
 
@@ -32,6 +32,7 @@ const segments = [
 export function Example() {
   return (
     <Scrubline.Root count={5000}>
+      <Scrubline.Controls showPlay />
       <Scrubline.Ruler />
       <Scrubline.Viewport>
         <Scrubline.Track>
@@ -45,6 +46,10 @@ export function Example() {
 ```
 
 Documentation and live demos: <!-- TODO: replace with the deployed URL --> https://DOCS_URL_PLACEHOLDER (also available locally on the home page, see below).
+
+## Customization
+
+shadcn copies the source into your project, so you can edit it freely. Without editing: pass children to `Controls` to compose your own set from `ControlPrevStep`, `ControlPlay`, `ControlZoomIn` etc.; give any control `children` to replace its icon (`ScrublineIcon` wraps your own SVG); use `Items` for custom React nodes at steps and `Segments` `renderLabel` for custom labels. See `scrubline-custom`.
 
 ## Local development
 

@@ -32,8 +32,13 @@ export function ScrublineTime() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Scrubline.Root count={3600} value={seconds} onValueChange={setSeconds}>
-        <Scrubline.Controls formatPosition={formatTime} />
+      <Scrubline.Root
+        count={3600}
+        value={seconds}
+        onValueChange={setSeconds}
+        stepsPerSecond={1}
+      >
+        <Scrubline.Controls formatPosition={formatTime} showPlay />
         <Scrubline.Ruler formatLabel={formatTime} />
         <Scrubline.Viewport>
           <Scrubline.Track>
@@ -43,18 +48,20 @@ export function ScrublineTime() {
         </Scrubline.Viewport>
       </Scrubline.Root>
 
-      {/* Frames: 2 minutes at 25 fps = 3000 steps, labels as mm:ss:ff. */}
+      {/* Frames: 2 minutes at 25 fps = 3000 steps, labels as mm:ss:ff.
+          stepsPerSecond={25} plays in real time. */}
       <Scrubline.Root
         count={FPS * 120}
         value={frame}
         onValueChange={setFrame}
         size="sm"
+        stepsPerSecond={FPS}
       >
         <Scrubline.Ruler formatLabel={formatFrames} />
         <Scrubline.Viewport>
           <Scrubline.Playhead formatPosition={formatFrames} />
         </Scrubline.Viewport>
-        <Scrubline.Controls formatPosition={formatFrames} />
+        <Scrubline.Controls formatPosition={formatFrames} showPlay />
       </Scrubline.Root>
     </div>
   )

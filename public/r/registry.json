@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "scrubline",
-  "homepage": "https://github.com/qbacuber/scrubline",
+  "name": "qbacuber",
+  "homepage": "https://github.com/qbacuber/ui",
   "items": [
     {
       "name": "scrubline",
@@ -24,12 +24,28 @@
       ]
     },
     {
+      "name": "scrubline-basic",
+      "type": "registry:component",
+      "title": "Scrubline basic",
+      "description": "23 steps in 5 colored fragments with ruler, playhead and controls.",
+      "registryDependencies": [
+        "qbacuber/ui/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-basic.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-basic.tsx"
+        }
+      ]
+    },
+    {
       "name": "scrubline-demo",
       "type": "registry:component",
       "title": "Scrubline demo",
       "description": "5000 steps with colored segments, markers, ruler and controls.",
       "registryDependencies": [
-        "qbacuber/scrubline/scrubline"
+        "qbacuber/ui/scrubline"
       ],
       "files": [
         {
@@ -45,7 +61,7 @@
       "title": "Scrubline minimap",
       "description": "100,000 steps and 10,000 segments with a minimap.",
       "registryDependencies": [
-        "qbacuber/scrubline/scrubline"
+        "qbacuber/ui/scrubline"
       ],
       "files": [
         {
@@ -61,7 +77,7 @@
       "title": "Scrubline compact",
       "description": "Compact (size sm) viewport with just a playhead.",
       "registryDependencies": [
-        "qbacuber/scrubline/scrubline"
+        "qbacuber/ui/scrubline"
       ],
       "files": [
         {
@@ -75,15 +91,31 @@
       "name": "scrubline-time",
       "type": "registry:component",
       "title": "Scrubline time",
-      "description": "Time (mm:ss) and frame (mm:ss:ff) labels via formatLabel and formatPosition.",
+      "description": "Time (mm:ss) and frame (mm:ss:ff) labels with playback at 1 and 25 steps per second.",
       "registryDependencies": [
-        "qbacuber/scrubline/scrubline"
+        "qbacuber/ui/scrubline"
       ],
       "files": [
         {
           "path": "registry/default/examples/scrubline-time.tsx",
           "type": "registry:component",
           "target": "components/examples/scrubline-time.tsx"
+        }
+      ]
+    },
+    {
+      "name": "scrubline-custom",
+      "type": "registry:component",
+      "title": "Scrubline custom",
+      "description": "Custom controls and icons, Items with React nodes, renderLabel and click callbacks.",
+      "registryDependencies": [
+        "qbacuber/ui/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-custom.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-custom.tsx"
         }
       ]
     }

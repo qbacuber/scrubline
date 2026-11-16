@@ -17,6 +17,9 @@ import {
   zoomAround,
   zoomLimits,
   type View,
+  HOLD_DELAY_MS,
+  HOLD_INTERVAL_MS,
+  holdStepSize,
 } from "@/registry/default/lib/scrubline-scale"
 
 const ZOOM_SPEED = 0.005 // czułość Ctrl + kółko / szczypania na touchpadzie
@@ -40,7 +43,23 @@ export interface UseScrublineOptions {
   snapPx?: number
   /** Przesuwanie widoku, gdy głowica jest ciągnięta przy krawędzi. */
   edgeScroll?: boolean
+  /** Odtwarzanie (sterowane lub wewnętrzne). */
+  playing?: boolean
+  defaultPlaying?: boolean
+  onPlayingChange?: (playing: boolean) => void
+  /** Prędkość odtwarzania, kroki na sekundę. */
+  stepsPerSecond?: number
+  /** Po dojściu do końca wróć na początek zamiast się zatrzymać. */
+  loop?: boolean
+  /**
+   * Klik w tło (bez przesunięcia). Wywołaj event.preventDefault(),
+   * żeby nie przesuwać głowicy.
+   */
+  onStepClick?: (step: number, event: React.PointerEvent<HTMLElement>) => void
 }
+
+/** Słuchacz kliku w viewport; dostaje zdarzenie i sam sprawdza trafienie (x, y). */
+export type ClickListener = (event: React.PointerEvent<HTMLElement>) => void
 
 /**
  * Stan sterowany lub wewnętrzny (jak w Radix).
@@ -82,6 +101,8 @@ export function useScrubline(options: UseScrublineOptions) {
     snapTo,
     snapPx = 8,
     edgeScroll = true,
+    stepsPerSecond = 10,
+    loop = false,
   } = options
 
   const [viewportEl, setViewportEl] = React.useState<HTMLElement | null>(null)
@@ -101,14 +122,42 @@ export function useScrubline(options: UseScrublineOptions) {
     sameView
   )
 
+  const [playing, setPlayingRaw, playingRef] = useControllable<boolean>(
+    options.playing,
+    options.defaultPlaying ?? false,
+    options.onPlayingChange,
+    Object.is
+  )
+  const clickListeners = React.useRef(new Set<ClickListener>())
+  const onStepClickRef = React.useRef(options.onStepClick)
+  onStepClickRef.current = options.onStepClick
+
   // Wszystko, czego potrzebują handlery, w jednym refie: dzięki temu
   // funkcje API są stabilne i nie trzeba przepinać listenerów.
   const limits = React.useMemo(
     () => zoomLimits(count, width, maxPxPerStep),
     [count, width, maxPxPerStep]
   )
-  const latest = React.useRef({ count, width, limits, snapTo, snapPx, edgeScroll })
-  latest.current = { count, width, limits, snapTo, snapPx, edgeScroll }
+  const latest = React.useRef({
+    count,
+    width,
+    limits,
+    snapTo,
+    snapPx,
+    edgeScroll,
+    stepsPerSecond,
+    loop,
+  })
+  latest.current = {
+    count,
+    width,
+    limits,
+    snapTo,
+    snapPx,
+    edgeScroll,
+    stepsPerSecond,
+    loop,
+  }
 
   /* ------------------------------ API ------------------------------ */
 
@@ -117,6 +166,13 @@ export function useScrubline(options: UseScrublineOptions) {
     const setView = (next: View) => {
       if (L().width <= 0) return
       setViewRaw(clampView(next, L().count, L().limits))
+    }
+    const play = () => {
+      const { count, loop } = L()
+      if (count <= 1) return
+      // Na końcu bez pętli odtwarzanie zaczyna od początku.
+      if (!loop && valueRef.current >= count - 1) setValueRaw(0)
+      setPlayingRaw(true)
     }
     return {
       setValue: (step: number) =>
@@ -136,8 +192,21 @@ export function useScrubline(options: UseScrublineOptions) {
       stepToX: (step: number) => stepToXPure(step, viewRef.current, L().width),
       xToStep: (x: number) =>
         xToStepPure(x, viewRef.current, L().width, L().count),
+      play,
+      pause: () => setPlayingRaw(false),
+      togglePlay: () => {
+        if (playingRef.current) setPlayingRaw(false)
+        else play()
+      },
+      /** Rejestruje słuchacza kliku w tło; zwraca funkcję wyrejestrowującą. */
+      subscribeClick: (fn: ClickListener) => {
+        clickListeners.current.add(fn)
+        return () => {
+          clickListeners.current.delete(fn)
+        }
+      },
     }
-  }, [setValueRaw, setViewRaw, viewRef, valueRef])
+  }, [setValueRaw, setViewRaw, setPlayingRaw, viewRef, valueRef, playingRef])
 
   /* --------------------------- Rozmiar ----------------------------- */
 
@@ -215,8 +284,12 @@ export function useScrubline(options: UseScrublineOptions) {
       if (!pointers.current.delete(e.pointerId)) return
       const g = gesture.current
       if (g.kind === "press" && e.type === "pointerup") {
-        // Palec/mysz się nie ruszyły: to klik, przenieś głowicę.
-        api.setValue(api.xToStep(e.clientX - left(e.currentTarget)))
+        // Palec/mysz się nie ruszyły: to klik. Słuchacze (segmenty, znaczniki)
+        // i onStepClick mogą go anulować przez preventDefault().
+        const step = api.xToStep(e.clientX - left(e.currentTarget))
+        clickListeners.current.forEach((fn) => fn(e))
+        onStepClickRef.current?.(step, e)
+        if (!e.isDefaultPrevented()) api.setValue(step)
       }
       const rest = [...pointers.current.values()]
       // Po pinchu zostaje jeden palec: kontynuuj jako pan (bez kliku na końcu).
@@ -315,6 +388,7 @@ export function useScrubline(options: UseScrublineOptions) {
           api.reveal() // głowica poza widokiem działa jak strzałka "pokaż mnie"
           return
         }
+        api.pause() // przeciąganie głowicy nie walczy z odtwarzaniem
         const viewport = e.currentTarget.offsetParent ?? e.currentTarget
         e.currentTarget.setPointerCapture(e.pointerId)
         drag.current = { clientX: e.clientX, el: viewport, raf: 0 }
@@ -379,6 +453,43 @@ export function useScrubline(options: UseScrublineOptions) {
     }
   }, [api, viewRef, valueRef])
 
+  /* --------------------------- Odtwarzanie -------------------------- */
+
+  // Czas jest akumulowany w ułamkach kroku, więc tempo jest dokładne
+  // niezależnie od częstotliwości klatek; wartość rośnie o całe kroki.
+  React.useEffect(() => {
+    if (!playing) return
+    let raf = 0
+    let last = performance.now()
+    let acc = 0
+    const tick = (now: number) => {
+      const { count, stepsPerSecond, loop } = latest.current
+      // Przycinamy dt, żeby po powrocie z ukrytej karty nie skoczyć o kilometry.
+      acc += (Math.min(now - last, 250) / 1000) * stepsPerSecond
+      last = now
+      const whole = Math.floor(acc)
+      if (whole > 0) {
+        acc -= whole
+        let next = valueRef.current + whole
+        if (next > count - 1) {
+          if (loop) next %= count
+          else {
+            api.setValue(count - 1)
+            api.reveal(count - 1)
+            api.pause()
+            return
+          }
+        }
+        api.setValue(next)
+        // Podążanie za głowicą, ale nie walcz z palcem przesuwającym tło.
+        if (pointers.current.size === 0) api.reveal(next)
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [playing, api, valueRef])
+
   React.useEffect(
     () => () => {
       if (drag.current) cancelAnimationFrame(drag.current.raf)
@@ -393,6 +504,7 @@ export function useScrubline(options: UseScrublineOptions) {
     view,
     width,
     dragging,
+    playing,
     snapTo,
     viewportRef: setViewportEl,
     viewportProps,
@@ -401,3 +513,58 @@ export function useScrubline(options: UseScrublineOptions) {
 }
 
 export type ScrublineApi = ReturnType<typeof useScrubline>
+
+/* ------------------------- Przytrzymanie przycisku ------------------------ */
+
+/**
+ * Przycisk z powtarzaniem i przyspieszaniem. `onStep(size)` jest wołane od razu
+ * (size = 1), a po HOLD_DELAY_MS co HOLD_INTERVAL_MS z rosnącym `size`
+ * (holdStepSize). Zwrócenie `false` z onStep przerywa powtarzanie.
+ * Klawiatura (Enter/Spacja) = pojedynczy krok przez onClick z detail === 0.
+ * Zwraca propsy do rozlania na <button>.
+ */
+export function useHoldRepeat(
+  onStep: (size: number) => boolean | void,
+  count: number
+) {
+  const stepRef = React.useRef(onStep)
+  stepRef.current = onStep
+  const countRef = React.useRef(count)
+  countRef.current = count
+  const timers = React.useRef<{ t?: number; i?: number }>({})
+
+  const stop = React.useCallback(() => {
+    clearTimeout(timers.current.t)
+    clearInterval(timers.current.i)
+    timers.current = {}
+  }, [])
+
+  React.useEffect(() => stop, [stop])
+
+  return React.useMemo(
+    () => ({
+      onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return
+        stop()
+        e.currentTarget.setPointerCapture?.(e.pointerId)
+        if (stepRef.current(1) === false) return
+        const t0 = performance.now()
+        timers.current.t = window.setTimeout(() => {
+          timers.current.i = window.setInterval(() => {
+            const size = holdStepSize(performance.now() - t0, countRef.current)
+            if (stepRef.current(size) === false) stop()
+          }, HOLD_INTERVAL_MS)
+        }, HOLD_DELAY_MS)
+      },
+      onPointerUp: stop,
+      onPointerLeave: stop,
+      onPointerCancel: stop,
+      onBlur: stop,
+      onClick: (e: React.MouseEvent<HTMLElement>) => {
+        // Myszka/dotyk obsłużył pointerdown; tu zostaje tylko klawiatura.
+        if (e.detail === 0) stepRef.current(1)
+      },
+    }),
+    [stop]
+  )
+}

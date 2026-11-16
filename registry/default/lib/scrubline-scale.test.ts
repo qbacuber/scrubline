@@ -15,7 +15,13 @@ import {
   neighbor,
   segmentPaths,
   markerPaths,
+  segmentAt,
+  markerAt,
+  holdStepSize,
+  HOLD_DELAY_MS,
+  HOLD_RAMP_MS,
   type Segment,
+  type Marker,
   type View,
 } from "@/registry/default/lib/scrubline-scale"
 
@@ -435,3 +441,63 @@ describe("markerPaths", () => {
 function axisToXLocal(pos: number, view: View, width: number) {
   return ((pos - view.start) * width) / (view.end - view.start)
 }
+
+describe("segmentAt", () => {
+  const segs: Segment[] = [
+    { id: "a", start: 0, end: 5 },
+    { id: "b", start: 5, end: 8 },
+    { id: "c", start: 10, end: 20 },
+  ]
+  it("finds the segment containing pos", () => {
+    expect(segmentAt(segs, 0)?.id).toBe("a")
+    expect(segmentAt(segs, 4.9)?.id).toBe("a")
+    expect(segmentAt(segs, 5)?.id).toBe("b")
+    expect(segmentAt(segs, 19.99)?.id).toBe("c")
+  })
+  it("returns null in gaps and outside", () => {
+    expect(segmentAt(segs, 8)).toBeNull()
+    expect(segmentAt(segs, 9.5)).toBeNull()
+    expect(segmentAt(segs, 20)).toBeNull()
+    expect(segmentAt(segs, -1)).toBeNull()
+    expect(segmentAt([], 3)).toBeNull()
+  })
+})
+
+describe("markerAt", () => {
+  const ms: Marker[] = [{ at: 2 }, { at: 3 }, { at: 50 }]
+  it("finds the nearest marker within tolerance", () => {
+    expect(markerAt(ms, 2.5, 0.2)?.at).toBe(2)
+    expect(markerAt(ms, 3.6, 0.2)?.at).toBe(3)
+    expect(markerAt(ms, 50.4, 0.2)?.at).toBe(50)
+  })
+  it("returns null when too far", () => {
+    expect(markerAt(ms, 10, 1)).toBeNull()
+    expect(markerAt([], 1, 5)).toBeNull()
+  })
+})
+
+describe("holdStepSize", () => {
+  it("is 1 before the delay", () => {
+    expect(holdStepSize(0, 1_000_000)).toBe(1)
+    expect(holdStepSize(HOLD_DELAY_MS - 1, 1_000_000)).toBe(1)
+  })
+  it("stays 1 for small counts", () => {
+    expect(holdStepSize(10_000, 40)).toBe(1)
+  })
+  it("grows linearly to ~count / 50", () => {
+    const count = 100_000
+    const mid = holdStepSize(HOLD_DELAY_MS + HOLD_RAMP_MS / 2, count)
+    expect(mid).toBeGreaterThan(900)
+    expect(mid).toBeLessThan(1100)
+    expect(holdStepSize(HOLD_DELAY_MS + HOLD_RAMP_MS, count)).toBe(2000)
+    expect(holdStepSize(60_000, count)).toBe(2000)
+  })
+  it("is monotonic", () => {
+    let prev = 0
+    for (let t = 0; t < 5000; t += 50) {
+      const s = holdStepSize(t, 5000)
+      expect(s).toBeGreaterThanOrEqual(prev)
+      prev = s
+    }
+  })
+})

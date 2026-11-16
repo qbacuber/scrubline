@@ -31,6 +31,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Validate registry
+        run: pnpm exec shadcn registry validate
+
       - name: Build registry
         run: pnpm exec shadcn build
 

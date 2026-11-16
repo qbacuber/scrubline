@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scrubline-basic",
+  "title": "Scrubline basic",
+  "description": "23 steps in 5 colored fragments with ruler, playhead and controls.",
+  "registryDependencies": [
+    "qbacuber/ui/scrubline"
+  ],
+  "files": [
+    {
+      "path": "registry/default/examples/scrubline-basic.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\n\nimport * as Scrubline from \"@/registry/default/ui/scrubline\"\nimport type { Segment } from \"@/registry/default/lib/scrubline-scale\"\n\n/** 23 steps split into 5 fragments. `end` is exclusive. */\nconst COUNT = 23\n\nconst FRAGMENTS: Segment[] = [\n  { id: \"a\", start: 0, end: 5, label: \"Intro\", color: \"#6366f1\" },\n  { id: \"b\", start: 5, end: 9, label: \"Setup\", color: \"#0ea5e9\" },\n  { id: \"c\", start: 9, end: 14, label: \"Action\", color: \"#10b981\" },\n  { id: \"d\", start: 14, end: 18, label: \"Twist\", color: \"#f59e0b\" },\n  { id: \"e\", start: 18, end: 23, label: \"Finale\", color: \"#ec4899\" },\n]\n\nexport function ScrublineBasic() {\n  const [value, setValue] = React.useState(0)\n\n  return (\n    <Scrubline.Root count={COUNT} value={value} onValueChange={setValue}>\n      <Scrubline.Controls />\n      {/* origin={1}: labels show step + 1, so ticks match the playhead. */}\n      <Scrubline.Ruler origin={1} formatLabel={(s) => String(s + 1)} />\n      <Scrubline.Viewport>\n        <Scrubline.Track>\n          <Scrubline.Segments items={FRAGMENTS} />\n        </Scrubline.Track>\n        <Scrubline.Playhead />\n      </Scrubline.Viewport>\n    </Scrubline.Root>\n  )\n}\n",
+      "type": "registry:component",
+      "target": "components/examples/scrubline-basic.tsx"
+    }
+  ],
+  "type": "registry:component"
+}

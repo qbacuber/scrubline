@@ -320,3 +320,57 @@ export function markerPaths(
   }
   return out
 }
+
+/* ------------------------------------------------------------------ */
+/* Trafienia (hit-testing) i przytrzymanie przycisku                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Odcinek zawierający pozycję `pos` (start <= pos < end) albo null.
+ * WYMAGA: items posortowane po start i nienachodzące na siebie.
+ */
+export function segmentAt(
+  items: readonly Segment[],
+  pos: number
+): Segment | null {
+  const i = lowerBound(items.length, (k) => items[k].end > pos)
+  const s = items[i]
+  return s && s.start <= pos ? s : null
+}
+
+/**
+ * Znacznik najbliższy pozycji `pos` (oś, float) w zasięgu `tolerance`
+ * kroków od środka jego komórki. WYMAGA: items posortowane po `at`.
+ */
+export function markerAt(
+  items: readonly Marker[],
+  pos: number,
+  tolerance: number
+): Marker | null {
+  const i = lowerBound(items.length, (k) => items[k].at + 0.5 >= pos)
+  let best: Marker | null = null
+  for (const k of [i - 1, i]) {
+    const m = items[k]
+    if (!m) continue
+    const d = Math.abs(m.at + 0.5 - pos)
+    if (d > tolerance) continue
+    if (!best || d < Math.abs(best.at + 0.5 - pos)) best = m
+  }
+  return best
+}
+
+export const HOLD_DELAY_MS = 400 // tyle trzeba trzymać, zanim zacznie się powtarzanie
+export const HOLD_INTERVAL_MS = 70 // odstęp powtórzeń
+export const HOLD_RAMP_MS = 3000 // czas liniowego narastania do maksimum
+
+/**
+ * Wielkość kroku po `elapsedMs` trzymania przycisku. Do HOLD_DELAY_MS to 1,
+ * potem rośnie liniowo przez HOLD_RAMP_MS do maksimum ~ count / 50
+ * (dla małych count zostaje 1).
+ */
+export function holdStepSize(elapsedMs: number, count: number): number {
+  const max = Math.max(1, Math.round(count / 50))
+  if (elapsedMs < HOLD_DELAY_MS) return 1
+  const t = clamp((elapsedMs - HOLD_DELAY_MS) / HOLD_RAMP_MS, 0, 1)
+  return 1 + Math.floor((max - 1) * t)
+}

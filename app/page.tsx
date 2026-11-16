@@ -1,14 +1,17 @@
 import type { ReactNode } from "react"
 
+import { DemoBlock } from "@/components/demo-block"
+import { ScrublineBasic } from "@/registry/default/examples/scrubline-basic"
 import { ScrublineCompact } from "@/registry/default/examples/scrubline-compact"
+import { ScrublineCustom } from "@/registry/default/examples/scrubline-custom"
 import { ScrublineDemo } from "@/registry/default/examples/scrubline-demo"
 import { ScrublineMinimap } from "@/registry/default/examples/scrubline-minimap"
 import { ScrublineTime } from "@/registry/default/examples/scrubline-time"
 
 type Row = [string, string, string, string]
 
-const INSTALL = "npx shadcn@latest add qbacuber/scrubline/scrubline"
-const INSTALL_TAG = "npx shadcn@latest add qbacuber/scrubline/scrubline#v0.1.0"
+const INSTALL = "npx shadcn@latest add qbacuber/ui/scrubline"
+const INSTALL_TAG = "npx shadcn@latest add qbacuber/ui/scrubline#v0.1.0"
 
 const USAGE = `import * as Scrubline from "@/components/ui/scrubline"
 
@@ -24,6 +27,18 @@ const USAGE = `import * as Scrubline from "@/components/ui/scrubline"
   </Scrubline.Viewport>
 </Scrubline.Root>`
 
+const CUSTOM = `<Scrubline.Controls>
+  <Scrubline.ControlPlay>
+    {(playing) => (playing ? <MyPause /> : <MyPlay />)}
+  </Scrubline.ControlPlay>
+  <Scrubline.ControlPrevStep aria-label="Back" />
+  <Scrubline.ControlPosition />
+  <Scrubline.ControlNextStep aria-label="Forward" />
+  <Scrubline.ControlZoomIn>
+    <Scrubline.ScrublineIcon><path d="M12 5v14M5 12h14" /></Scrubline.ScrublineIcon>
+  </Scrubline.ControlZoomIn>
+</Scrubline.Controls>`
+
 const PARTS: { name: string; note: string; rows: Row[] }[] = [
   {
     name: "Root",
@@ -38,6 +53,11 @@ const PARTS: { name: string; note: string; rows: Row[] }[] = [
       ["snapTo", "readonly number[]", "-", "Sorted steps the playhead snaps to (segment edges, markers). Also used by Shift+arrows and the segment buttons."],
       ["snapPx", "number", "8", "Snap distance in pixels."],
       ["edgeScroll", "boolean", "true", "Pan the view while dragging the playhead near an edge."],
+      ["playing / defaultPlaying", "boolean", "false", "Playback state (controlled / uncontrolled)."],
+      ["onPlayingChange", "(playing: boolean) => void", "-", "Called when playback starts or stops."],
+      ["stepsPerSecond", "number", "10", "Playback speed."],
+      ["loop", "boolean", "false", "Restart from the first step at the end instead of stopping."],
+      ["onStepClick", "(step: number, event) => void", "-", "Click on the background. preventDefault() keeps the playhead where it is."],
       ["size", '"sm" | "default" | "lg"', '"default"', "Heights of lanes, ruler, minimap and buttons."],
     ],
   },
@@ -57,6 +77,9 @@ const PARTS: { name: string; note: string; rows: Row[] }[] = [
     rows: [
       ["items", "Segment[]", "required", "Sorted by start, non-overlapping. Segment: { id, start, end (exclusive), color?, label? }."],
       ["minLabelPx", "number", "48", "Minimum segment width in px to show its label."],
+      ["onSegmentClick", "(segment, event) => void", "-", "Click on a segment. preventDefault() suppresses the playhead move."],
+      ["onSegmentHover", "(segment | null) => void", "-", "Pointer enters a segment, or null when it leaves."],
+      ["renderLabel", "(segment, { width }) => ReactNode", "segment.label", "Custom label content; width is the segment width in px."],
     ],
   },
   {
@@ -66,6 +89,17 @@ const PARTS: { name: string; note: string; rows: Row[] }[] = [
       ["items", "Marker[]", "required", "Sorted by at. Marker: { at, variant?, label? }. The variant \"major\" is drawn taller."],
       ["variantClassName", "Record<string, string>", "-", "Tailwind classes per variant, e.g. stroke color."],
       ["labelMinPxPerStep", "number", "12", "Marker labels (tooltips) appear once a step is at least this wide."],
+      ["onMarkerClick", "(marker, event) => void", "-", "Click within clickTolerancePx of a marker. preventDefault() suppresses the playhead move."],
+      ["clickTolerancePx", "number", "6", "Click distance to a marker in px."],
+    ],
+  },
+  {
+    name: "Items",
+    note: "Custom React nodes placed at steps, in their own lane. Only visible items are rendered. Put it inside Track.",
+    rows: [
+      ["items", "T[] (T extends { at: number; id: string })", "required", "Sorted by at."],
+      ["renderItem", "(item: T, { x, step }) => ReactNode", "required", "Content of an item; x is its position in px. Items catch pointer events; call stopPropagation() in onPointerDown to not move the playhead."],
+      ["minGapPx", "number", "0", "Skip items closer than this to the previous one."],
     ],
   },
   {
@@ -87,10 +121,24 @@ const PARTS: { name: string; note: string; rows: Row[] }[] = [
   },
   {
     name: "Controls",
-    note: "Toolbar: previous/next segment and step, position, zoom out/in, fit, reveal playhead.",
+    note: "Toolbar (role=toolbar). Without children it renders the default set; with children it renders only those.",
     rows: [
-      ["labels", "Partial<ControlsLabels>", "English", "Button labels: prevStep, nextStep, prevSegment, nextSegment, zoomIn, zoomOut, fit, reveal."],
+      ["labels", "Partial<ControlsLabels>", "English", "Button labels: prevStep, nextStep, prevSegment, nextSegment, zoomIn, zoomOut, fit, reveal, play, pause."],
       ["formatPosition", "(step: number) => string", "step + 1", "Text of the position readout."],
+      ["showPlay", "boolean", "false", "Adds a play/pause button to the default set."],
+      ["children", "ReactNode", "default set", "Compose from the parts below."],
+    ],
+  },
+  {
+    name: "Control parts",
+    note: "ControlPrevStep, ControlNextStep (hold to repeat, with acceleration), ControlPrevSegment, ControlNextSegment, ControlZoomIn, ControlZoomOut, ControlFit, ControlReveal, ControlPlay, ControlPosition. Buttons accept button props.",
+    rows: [
+      ["children", "ReactNode", "default icon", "Replaces the icon of a button."],
+      ["ControlPlay children", "ReactNode | (playing: boolean) => ReactNode", "Play / Pause icons", "Use the function form to switch icons by state."],
+      ["ControlPosition formatPosition", "(step: number) => string", "step + 1", "Text of the readout."],
+      ["ScrublineIcon", "ComponentProps<'svg'>", "-", "24x24 SVG wrapper with the shared size and stroke for custom icons."],
+      ["ScrublineIcons", "PrevSegment, PrevStep, NextStep, NextSegment, ZoomOut, ZoomIn, Fit, Reveal, Play, Pause", "-", "Default icons, reusable in your own buttons."],
+      ["useHoldRepeat", "hook", "-", "Hold-to-repeat with acceleration for your own step buttons."],
     ],
   },
   {
@@ -176,35 +224,95 @@ export default function Home() {
         <Code>{USAGE}</Code>
       </Section>
 
+      <Section title="Basic">
+        <p className="text-sm text-muted-foreground">
+          23 steps in 5 fragments. A step is one integer position; a segment
+          covers steps <code>start</code> to <code>end</code> (exclusive). The
+          ruler uses <code>origin=&#123;1&#125;</code> so its numbers match the
+          playhead.
+        </p>
+        <DemoBlock name="scrubline-basic"><ScrublineBasic /></DemoBlock>
+      </Section>
+
       <Section title="Demo">
         <p className="text-sm text-muted-foreground">
           5,000 steps, segments, markers, ruler and controls. Shift + arrows
           jump between snap points.
         </p>
-        <ScrublineDemo />
+        <DemoBlock name="scrubline-demo"><ScrublineDemo /></DemoBlock>
       </Section>
 
       <Section title="Minimap, 100,000 steps">
         <p className="text-sm text-muted-foreground">
           10,000 generated segments. Drag the minimap frame to navigate.
         </p>
-        <ScrublineMinimap />
+        <DemoBlock name="scrubline-minimap"><ScrublineMinimap /></DemoBlock>
       </Section>
 
       <Section title="Compact">
         <p className="text-sm text-muted-foreground">
           <code>size=&quot;sm&quot;</code> with only a viewport and a playhead.
         </p>
-        <ScrublineCompact />
+        <DemoBlock name="scrubline-compact"><ScrublineCompact /></DemoBlock>
       </Section>
 
       <Section title="Time and frames">
         <p className="text-sm text-muted-foreground">
           Steps are just integers; <code>formatLabel</code> and{" "}
-          <code>formatPosition</code> turn them into mm:ss (top) or mm:ss:ff at
-          25 fps (bottom).
+          <code>formatPosition</code> turn them into mm:ss (top, 1 step per
+          second) or mm:ss:ff at 25 fps (bottom). Press play:{" "}
+          <code>stepsPerSecond</code> sets the playback speed.
         </p>
-        <ScrublineTime />
+        <DemoBlock name="scrubline-time"><ScrublineTime /></DemoBlock>
+      </Section>
+
+      <Section title="Custom controls, items and callbacks">
+        <p className="text-sm text-muted-foreground">
+          Own control composition with inline SVG icons, React nodes placed at
+          steps with <code>Items</code>, a custom segment label, and click
+          callbacks. Click things and watch the line below the timeline.
+        </p>
+        <DemoBlock name="scrubline-custom"><ScrublineCustom /></DemoBlock>
+      </Section>
+
+      <Section title="Customization">
+        <p className="text-sm text-muted-foreground">
+          shadcn copies the source into your project, so everything is
+          editable: change the classes, the sizes or the icons directly in{" "}
+          <code>components/ui/scrubline.tsx</code>. You can also customize
+          without editing it.
+        </p>
+        <ul className="list-disc pl-5 text-sm text-muted-foreground">
+          <li>
+            <b>Compose Controls.</b> Pass children to <code>Controls</code> and
+            it renders only those, in your order. Use the parts{" "}
+            <code>ControlPrevStep</code>, <code>ControlNextStep</code>,{" "}
+            <code>ControlPrevSegment</code>, <code>ControlNextSegment</code>,{" "}
+            <code>ControlZoomIn</code>, <code>ControlZoomOut</code>,{" "}
+            <code>ControlFit</code>, <code>ControlReveal</code>,{" "}
+            <code>ControlPlay</code> and <code>ControlPosition</code>.
+          </li>
+          <li>
+            <b>Replace icons.</b> Give a control <code>children</code> to
+            replace its icon. Draw your own with <code>ScrublineIcon</code>{" "}
+            (an SVG wrapper with the shared size and stroke) or reuse{" "}
+            <code>ScrublineIcons.*</code>.
+          </li>
+          <li>
+            <b>Labels.</b> <code>labels</code> on <code>Controls</code>, or{" "}
+            <code>aria-label</code> on a single part, for translation.
+          </li>
+          <li>
+            <b>Your own nodes.</b> <code>Items</code> places any React node at
+            a step, <code>Segments</code> accepts <code>renderLabel</code>.
+          </li>
+          <li>
+            <b>Your own controls.</b> <code>useScrublineContext()</code> gives
+            value, view, playing and the setters, and <code>useHoldRepeat</code>{" "}
+            adds hold-to-repeat to any button.
+          </li>
+        </ul>
+        <Code>{CUSTOM}</Code>
       </Section>
 
       <Section title="API">
