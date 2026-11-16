@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scrubline-compact",
+  "type": "registry:component",
+  "title": "Scrubline compact",
+  "description": "Compact (size sm) viewport with just a playhead.",
+  "registryDependencies": [
+    "qbacuber/scrubline/scrubline"
+  ],
+  "files": [
+    {
+      "path": "registry/default/examples/scrubline-compact.tsx",
+      "content": "\"use client\"\n\nimport * as Scrubline from \"@/registry/default/ui/scrubline\"\n\nexport function ScrublineCompact() {\n  return (\n    <Scrubline.Root count={500} defaultValue={120} size=\"sm\">\n      <Scrubline.Viewport className=\"h-6\">\n        <Scrubline.Playhead />\n      </Scrubline.Viewport>\n    </Scrubline.Root>\n  )\n}\n",
+      "type": "registry:component",
+      "target": "components/examples/scrubline-compact.tsx"
+    }
+  ]
+}

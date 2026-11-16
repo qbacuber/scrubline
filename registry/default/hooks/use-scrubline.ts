@@ -393,6 +393,7 @@ export function useScrubline(options: UseScrublineOptions) {
     view,
     width,
     dragging,
+    snapTo,
     viewportRef: setViewportEl,
     viewportProps,
     playheadProps,

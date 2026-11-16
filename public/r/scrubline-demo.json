@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scrubline-demo",
+  "type": "registry:component",
+  "title": "Scrubline demo",
+  "description": "5000 steps with colored segments, markers, ruler and controls.",
+  "registryDependencies": [
+    "qbacuber/scrubline/scrubline"
+  ],
+  "files": [
+    {
+      "path": "registry/default/examples/scrubline-demo.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\n\nimport * as Scrubline from \"@/registry/default/ui/scrubline\"\nimport type { Marker, Segment } from \"@/registry/default/lib/scrubline-scale\"\n\nconst COUNT = 5000\n\nconst SEGMENTS: Segment[] = [\n  { id: \"intro\", start: 0, end: 600, label: \"Intro\", color: \"#6366f1\" },\n  { id: \"verse-1\", start: 600, end: 1700, label: \"Verse 1\", color: \"#0ea5e9\" },\n  { id: \"chorus-1\", start: 1700, end: 2300, label: \"Chorus\", color: \"#f59e0b\" },\n  { id: \"verse-2\", start: 2300, end: 3500, label: \"Verse 2\", color: \"#0ea5e9\" },\n  { id: \"chorus-2\", start: 3500, end: 4300, label: \"Chorus\", color: \"#f59e0b\" },\n  { id: \"outro\", start: 4300, end: 5000, label: \"Outro\", color: \"#6366f1\" },\n]\n\nconst MARKERS: Marker[] = [\n  { at: 250, label: \"Cue A\" },\n  { at: 1000, variant: \"major\", label: \"Key change\" },\n  { at: 1700, variant: \"major\", label: \"Drop\" },\n  { at: 2900, label: \"Cue B\" },\n  { at: 3500, variant: \"major\", label: \"Drop\" },\n  { at: 4600, label: \"Fade\" },\n]\n\nconst SNAP = Array.from(\n  new Set([\n    ...SEGMENTS.flatMap((s) => [s.start, s.end]),\n    ...MARKERS.map((m) => m.at),\n  ])\n).sort((a, b) => a - b)\n\nexport function ScrublineDemo() {\n  const [value, setValue] = React.useState(0)\n\n  return (\n    <Scrubline.Root\n      count={COUNT}\n      value={value}\n      onValueChange={setValue}\n      snapTo={SNAP}\n    >\n      <Scrubline.Controls />\n      <Scrubline.Ruler origin={1} formatLabel={(s) => String(s + 1)} />\n      <Scrubline.Viewport>\n        <Scrubline.Track>\n          <Scrubline.Segments items={SEGMENTS} />\n          <Scrubline.Markers\n            items={MARKERS}\n            variantClassName={{ major: \"stroke-destructive stroke-2\" }}\n          />\n        </Scrubline.Track>\n        <Scrubline.Playhead />\n      </Scrubline.Viewport>\n    </Scrubline.Root>\n  )\n}\n",
+      "type": "registry:component",
+      "target": "components/examples/scrubline-demo.tsx"
+    }
+  ]
+}

@@ -1,23 +1,60 @@
-# registry-template
+# Scrubline
 
-You can use the `shadcn` CLI to run your own component registry. Running your own
-component registry allows you to distribute your custom components, hooks, pages, and
-other files to any React project.
+A step-based timeline for React: zoom, pan, playhead, ruler, segments, markers and a minimap. It renders only the visible range, so it stays smooth with 100,000+ steps. Distributed as a [shadcn](https://ui.shadcn.com) registry item (Next.js, React 19, Tailwind v4).
 
-> [!IMPORTANT]  
-> This template uses Tailwind v4. For Tailwind v3, see [registry-template-v3](https://github.com/shadcn-ui/registry-template-v3).
+<!-- TODO: record a GIF and save it as docs/scrubline.gif -->
+![Scrubline demo](docs/scrubline.gif)
 
-## Getting Started
+## Installation
 
-This is a template for creating a custom registry using Next.js.
+```bash
+npx shadcn@latest add qbacuber/scrubline/scrubline
+```
 
-- The template uses a `registry.json` file to define components and their files.
-- The `shadcn build` command is used to build the registry.
-- The registry items are served as static files under `public/r/[name].json`.
-- The template also includes a route handler for serving registry items.
-- Every registry item are compatible with the `shadcn` CLI.
-- We have also added v0 integration using the `Open in v0` api.
+Pin a release with a tag:
 
-## Documentation
+```bash
+npx shadcn@latest add qbacuber/scrubline/scrubline#v0.1.0
+```
 
-Visit the [shadcn documentation](https://ui.shadcn.com/docs/registry) to view the full documentation.
+Examples can be installed the same way, e.g. `qbacuber/scrubline/scrubline-demo`, `scrubline-minimap`, `scrubline-compact`, `scrubline-time`.
+
+## Usage
+
+```tsx
+import * as Scrubline from "@/components/ui/scrubline"
+
+const segments = [
+  { id: "a", start: 0, end: 1200, label: "Intro", color: "#6366f1" },
+  { id: "b", start: 1200, end: 5000, label: "Main", color: "#0ea5e9" },
+]
+
+export function Example() {
+  return (
+    <Scrubline.Root count={5000}>
+      <Scrubline.Ruler />
+      <Scrubline.Viewport>
+        <Scrubline.Track>
+          <Scrubline.Segments items={segments} />
+        </Scrubline.Track>
+        <Scrubline.Playhead />
+      </Scrubline.Viewport>
+    </Scrubline.Root>
+  )
+}
+```
+
+Documentation and live demos: <!-- TODO: replace with the deployed URL --> https://DOCS_URL_PLACEHOLDER (also available locally on the home page, see below).
+
+## Local development
+
+```bash
+pnpm install
+pnpm dev                    # docs page at http://localhost:3000
+pnpm test                   # unit tests
+pnpm exec shadcn build      # builds the registry into public/r
+```
+
+## License
+
+MIT

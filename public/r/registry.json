@@ -9,9 +9,82 @@
       "title": "Scrubline",
       "description": "A step-based timeline with zoom, pan, playhead, ruler, segments, markers and minimap. Renders only the visible range, so it stays smooth with 100k+ steps.",
       "files": [
-        { "path": "registry/default/ui/scrubline.tsx", "type": "registry:ui" },
-        { "path": "registry/default/hooks/use-scrubline.ts", "type": "registry:hook" },
-        { "path": "registry/default/lib/scrubline-scale.ts", "type": "registry:lib" }
+        {
+          "path": "registry/default/ui/scrubline.tsx",
+          "type": "registry:ui"
+        },
+        {
+          "path": "registry/default/hooks/use-scrubline.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "registry/default/lib/scrubline-scale.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "scrubline-demo",
+      "type": "registry:component",
+      "title": "Scrubline demo",
+      "description": "5000 steps with colored segments, markers, ruler and controls.",
+      "registryDependencies": [
+        "qbacuber/scrubline/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-demo.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-demo.tsx"
+        }
+      ]
+    },
+    {
+      "name": "scrubline-minimap",
+      "type": "registry:component",
+      "title": "Scrubline minimap",
+      "description": "100,000 steps and 10,000 segments with a minimap.",
+      "registryDependencies": [
+        "qbacuber/scrubline/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-minimap.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-minimap.tsx"
+        }
+      ]
+    },
+    {
+      "name": "scrubline-compact",
+      "type": "registry:component",
+      "title": "Scrubline compact",
+      "description": "Compact (size sm) viewport with just a playhead.",
+      "registryDependencies": [
+        "qbacuber/scrubline/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-compact.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-compact.tsx"
+        }
+      ]
+    },
+    {
+      "name": "scrubline-time",
+      "type": "registry:component",
+      "title": "Scrubline time",
+      "description": "Time (mm:ss) and frame (mm:ss:ff) labels via formatLabel and formatPosition.",
+      "registryDependencies": [
+        "qbacuber/scrubline/scrubline"
+      ],
+      "files": [
+        {
+          "path": "registry/default/examples/scrubline-time.tsx",
+          "type": "registry:component",
+          "target": "components/examples/scrubline-time.tsx"
+        }
       ]
     }
   ]
